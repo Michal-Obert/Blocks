@@ -89,4 +89,20 @@ public class ChunkManager
 		m_ActiveChunks.Remove(chunk);
 		m_InactiveChunks.Add(chunk);
 	}
+
+	public void OnPlayerDestroyedCube(Vector3 chunkWorldPos, Vector3 cubeLocalPos)
+	{
+		var chunkCoordX = chunkWorldPos.x / Chunk.SIZE;
+		var chunkCoordY = chunkWorldPos.z / Chunk.SIZE;
+
+		for (int i = 0, count = m_ActiveChunks.Count; i < count; i++)
+		{
+			var chunk = m_ActiveChunks[i];
+			if (chunk.CoordX == chunkCoordX && chunk.CoordY == chunkCoordY)
+			{
+				chunk.OnCubeDestroyed(cubeLocalPos);
+				return;
+			}
+		}
+	}
 }

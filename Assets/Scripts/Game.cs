@@ -5,18 +5,16 @@ public class Game : MonoBehaviour
 	// CONFIGURATION
 
 	[SerializeField]
-	private GameObject m_PlayerPrefab;
+	private Player       m_Player;
 	[SerializeField]
-	private GameObject m_CubePrefab;
+	private GameObject   m_CubePrefab;
 
 	// PUBLIC PROPERTIES
 
 	public  Vector2      PlayerChunkPosition { get; private set; }
-	public  Vector2      PlayerLookChunk     { get { return -Vector2.one; } }
 
 	// PRIVATE PROPERTIES
 
-	private Transform    m_Player;
 	private ChunkManager m_ChunkManager;
 	private int          m_PerlinOffset; //TODO: Persist between sessions
 
@@ -28,14 +26,14 @@ public class Game : MonoBehaviour
 		m_ChunkManager      = new ChunkManager(m_CubePrefab, m_PerlinOffset);
 		m_ChunkManager.GenerateInitialWorld();
 
-		m_Player            = GameObject.Instantiate(m_PlayerPrefab).transform;
-		m_Player.position   = new Vector3(0, Chunk.SIZE, 0); ;
+		m_Player.Spawn(new Vector3(0, Chunk.SIZE, 0)) ;
+		m_Player.OnCubeHit += m_ChunkManager.OnPlayerDestroyedCube;
 		PlayerChunkPosition = new Vector2(0, 0);
 	}
 
 	void Update()
 	{
-		var playerPos    = m_Player.position;
+		var playerPos    = m_Player.Position;
 		if (playerPos.x < 0)
 			playerPos.x -= Chunk.SIZE;
 		if (playerPos.z < 0)

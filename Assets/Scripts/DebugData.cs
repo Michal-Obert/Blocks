@@ -33,8 +33,7 @@ public class DebugData : MonoBehaviour
 		{
 			m_DebugText.text =  $" FPS: {fps}\n" +
 								$"~FPS: {m_FPSSum / m_FPSChecks}\n"+
-								$"CurrentChunk: {m_Game.PlayerChunkPosition.ToString("0")}\n" +
-								$"LookChunk:    {m_Game.PlayerLookChunk.ToString("0")}";
+								$"CurrentChunk: {m_Game.PlayerChunkPosition.ToString("0")}\n";
 			m_FPSCheckTimer  = 0;
 		}
 	}

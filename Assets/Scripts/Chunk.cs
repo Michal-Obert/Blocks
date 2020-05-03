@@ -1,12 +1,14 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
+using static Cube;
+
 public class Chunk
 {
 	// CONSTANTS
 
-	public  const int           SIZE         = 12;
-	private const float         PERLIN_SCALE = 0.6f;
+	public  const int            SIZE         = 20;
+	private const float          PERLIN_SCALE = 0.6f;
 
 	// PUBLIC PROPERTIES
 
@@ -42,14 +44,34 @@ public class Chunk
 				m_Cubes[x][y] = new Cube[SIZE];
 				for (int z = 0; z < SIZE; z++)
 				{
-					var cubeObject                     = Object.Instantiate(cubePrefab, m_Root.transform);
+					var cubeObject                     = UnityEngine.Object.Instantiate(cubePrefab, m_Root.transform);
 					cubeObject.transform.localPosition = new Vector3(x, y, z);
-					var cube                           = new Cube(cubeObject);
+					var cube                           = cubeObject.GetComponent<Cube>();
 					m_Cubes[x][y][z]                   = cube;
+					cube.Init(42);
 					if(SIZE * ComputePerlinNoise(new Vector2(CoordX*SIZE + x, CoordY*SIZE + z)) > y)
-						cube.SetActive(true);
+						cube.SetStatus(E_Status.Active);
 					else
-						cube.SetActive(false);
+						cube.SetStatus(E_Status.Disabled);
+				}
+			}
+		}
+
+		DeactivateHiddenCubes();
+	}
+
+	//TODO: Only 6 cubes have to be checked, not all of them
+	public void OnCubeDestroyed(Vector3 cubeLocalPos)
+	{
+		for (int x = 0; x < SIZE; x++)
+		{
+			for (int y = SIZE - 1; y >= 0; --y)
+			{
+				for (int z = 0; z < SIZE; z++)
+				{
+					var cube = m_Cubes[x][y][z];
+					if (cube.Status == E_Status.Hidden && SIZE * ComputePerlinNoise(new Vector2(CoordX * SIZE + x, CoordY * SIZE + z)) > y)
+						cube.SetStatus(E_Status.Active);
 				}
 			}
 		}
@@ -76,9 +98,9 @@ public class Chunk
 				{
 					var cube = m_Cubes[x][y][z];
 					if (SIZE * ComputePerlinNoise(new Vector2(CoordX * SIZE + x, CoordY * SIZE + z)) > y)
-						cube.SetActive(true);
+						cube.SetStatus(E_Status.Active);
 					else
-						cube.SetActive(false);
+						cube.SetStatus(E_Status.Disabled);
 				}
 			}
 		}
@@ -110,12 +132,12 @@ public class Chunk
 				{
 					if (y < SIZE - 1) //top square always visible, no point in checking
 					{
-						var topCubeCheck   =                           m_Cubes[x][y + 1][z].IsActive;
-						var botCubeCheck   = (y == 0)        ? true  : m_Cubes[x][y - 1][z].IsActive; //Nobody can see bottom cube from bottom.
-						var frontCubeCheck = (z == SIZE - 1) ? false : m_Cubes[x][y][z + 1].IsActive;
-						var backCubeCheck  = (z == 0)        ? false : m_Cubes[x][y][z - 1].IsActive;
-						var rightCubeCheck = (x == SIZE - 1) ? false : m_Cubes[x + 1][y][z].IsActive;
-						var leftCubeCheck  = (x == 0)        ? false : m_Cubes[x - 1][y][z].IsActive;
+						var topCubeCheck   =                           m_Cubes[x][y + 1][z].Status == E_Status.Active;
+						var botCubeCheck   = (y == 0)        ? true  : m_Cubes[x][y - 1][z].Status == E_Status.Active; //Nobody can see bottom cube from bottom.
+						var frontCubeCheck = (z == SIZE - 1) ? false : m_Cubes[x][y][z + 1].Status == E_Status.Active;
+						var backCubeCheck  = (z == 0)        ? false : m_Cubes[x][y][z - 1].Status == E_Status.Active;
+						var rightCubeCheck = (x == SIZE - 1) ? false : m_Cubes[x + 1][y][z].Status == E_Status.Active;
+						var leftCubeCheck  = (x == 0)        ? false : m_Cubes[x - 1][y][z].Status == E_Status.Active;
 
 						if (topCubeCheck && botCubeCheck && frontCubeCheck && backCubeCheck && rightCubeCheck && leftCubeCheck)
 						{
@@ -125,11 +147,12 @@ public class Chunk
 				}
 			}
 		}
+
 		for (int i = 0, count = m_CubesToDeactivate.Count; i < count; i++)
 		{
 			var cubeCoords = m_CubesToDeactivate[i];
 			var cube       = m_Cubes[cubeCoords.Item1][cubeCoords.Item2][cubeCoords.Item3];
-			cube.SetActive(false);
+			cube.SetStatus(E_Status.Hidden);
 		}
 		m_CubesToDeactivate.Clear();
 	}
