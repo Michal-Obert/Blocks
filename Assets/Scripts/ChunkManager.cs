@@ -5,19 +5,21 @@ public class ChunkManager
 {
 	// CONSTANTS
 
-	private const int CHUNK_VISIBILITY_RANGE = 4;
+	private const int CHUNK_VISIBILITY_RANGE = 3;
 
 	// PRIVATE PROPERTIES
 
 	private List<Chunk> m_InactiveChunks = new List<Chunk>((2 * CHUNK_VISIBILITY_RANGE + 1) * 2 - 1);
 	private List<Chunk> m_ActiveChunks   = new List<Chunk>((2 * CHUNK_VISIBILITY_RANGE + 1) * (2 * CHUNK_VISIBILITY_RANGE + 1));
 	private GameObject  m_CubePrefab;
+	private int         m_PerlinOffset;
 
 	// CONSTRUCTOR
 
-	public ChunkManager(GameObject cubePrefab)
+	public ChunkManager(GameObject cubePrefab, int perlinOffset)
 	{
-		m_CubePrefab = cubePrefab;
+		m_CubePrefab   = cubePrefab;
+		m_PerlinOffset = perlinOffset;
 	}
 
 	// PUBLIC METHODS
@@ -76,7 +78,7 @@ public class ChunkManager
 			return;
 		}
 
-		chunk  = new Chunk(m_CubePrefab, coords);
+		chunk  = new Chunk(m_CubePrefab, coords, m_PerlinOffset);
 
 		m_ActiveChunks.Add(chunk);
 	}

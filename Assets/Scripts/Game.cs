@@ -18,12 +18,14 @@ public class Game : MonoBehaviour
 
 	private Transform    m_Player;
 	private ChunkManager m_ChunkManager;
+	private int          m_PerlinOffset; //TODO: Persist between sessions
 
 	//MONO OVERRIDES
 
 	void Start()
 	{
-		m_ChunkManager      = new ChunkManager(m_CubePrefab);
+		m_PerlinOffset      = Random.Range(0, 10000);
+		m_ChunkManager      = new ChunkManager(m_CubePrefab, m_PerlinOffset);
 		m_ChunkManager.GenerateInitialWorld();
 
 		m_Player            = GameObject.Instantiate(m_PlayerPrefab).transform;
