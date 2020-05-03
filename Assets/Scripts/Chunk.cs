@@ -1,22 +1,24 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class Chunk
 {
 	// CONSTANTS
 
-	public const int   SIZE         = 12;
-	public const float PERLIN_SCALE = 0.6f;
+	public  const int           SIZE         = 12;
+	private const float         PERLIN_SCALE = 0.6f;
 
 	// PUBLIC PROPERTIES
 
-	public  int        CoordX { get; private set; }
-	public  int        CoordY { get; private set; }
+	public  int                 CoordX { get; private set; }
+	public  int                 CoordY { get; private set; }
 
 	// PRIVATE PROPERTIES
 
-	private GameObject m_Root;
-	private Cube[][][] m_Cubes;
-	private int        m_PerlinOffset;
+	private GameObject          m_Root;
+	private Cube[][][]          m_Cubes;
+	private List<(int,int,int)> m_CubesToDeactivate = new List<(int,int,int)>(SIZE * SIZE * SIZE / 4);
+	private int                 m_PerlinOffset;
 
 	// CONSTRUCTOR
 
@@ -117,12 +119,18 @@ public class Chunk
 
 						if (topCubeCheck && botCubeCheck && frontCubeCheck && backCubeCheck && rightCubeCheck && leftCubeCheck)
 						{
-							var cube = m_Cubes[x][y][z];
-							cube.SetActive(false);
+							m_CubesToDeactivate.Add((x, y, z));
 						}
 					}
 				}
 			}
 		}
+		for (int i = 0, count = m_CubesToDeactivate.Count; i < count; i++)
+		{
+			var cubeCoords = m_CubesToDeactivate[i];
+			var cube       = m_Cubes[cubeCoords.Item1][cubeCoords.Item2][cubeCoords.Item3];
+			cube.SetActive(false);
+		}
+		m_CubesToDeactivate.Clear();
 	}
 }
