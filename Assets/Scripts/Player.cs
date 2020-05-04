@@ -8,7 +8,7 @@ public class Player : MonoBehaviour
 
 	private const int   LEFT_BUTTON  = 0;
 	private const int   RIGHT_BUTTON = 1;
-	private const int   DAMAGE       = 42;
+	private const int   DAMAGE       = 1;
 	private const float RAYCAST_TIME = 0.25f;
 
 	// CONFIGURATION

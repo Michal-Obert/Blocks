@@ -476,6 +476,11 @@ MonoBehaviour:
   m_Player: {fileID: 1284810871}
   m_CubePrefab: {fileID: 4242021217803645362, guid: d0553d1cefffcca4f8c749afbfa1f444,
     type: 3}
+  m_CubeTypesData:
+  - {fileID: 11400000, guid: 966f182596d182b41833405207230791, type: 2}
+  - {fileID: 11400000, guid: f476468ea9e969142996deed084cc6d1, type: 2}
+  - {fileID: 11400000, guid: 611b8a17889a64842bec5f6b6c9b4e72, type: 2}
+  - {fileID: 11400000, guid: 2918b9f86bc70ee45911c47f63adc95c, type: 2}
 --- !u!4 &1863292025
 Transform:
   m_ObjectHideFlags: 0

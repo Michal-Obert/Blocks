@@ -9,17 +9,19 @@ public class ChunkManager
 
 	// PRIVATE PROPERTIES
 
-	private List<Chunk> m_InactiveChunks = new List<Chunk>((2 * CHUNK_VISIBILITY_RANGE + 1) * 2 - 1);
-	private List<Chunk> m_ActiveChunks   = new List<Chunk>((2 * CHUNK_VISIBILITY_RANGE + 1) * (2 * CHUNK_VISIBILITY_RANGE + 1));
-	private GameObject  m_CubePrefab;
-	private int         m_PerlinOffset;
+	private List<Chunk>    m_InactiveChunks = new List<Chunk>((2 * CHUNK_VISIBILITY_RANGE + 1) * 2 - 1);
+	private List<Chunk>    m_ActiveChunks   = new List<Chunk>((2 * CHUNK_VISIBILITY_RANGE + 1) * (2 * CHUNK_VISIBILITY_RANGE + 1));
+	private GameObject     m_CubePrefab;
+	private int            m_PerlinOffset; //tood persist between sessions;
+	private CubeTypeData[] m_CubeTypesData;
 
 	// CONSTRUCTOR
 
-	public ChunkManager(GameObject cubePrefab, int perlinOffset)
+	public ChunkManager(GameObject cubePrefab, CubeTypeData[] cubeTypesData)
 	{
-		m_CubePrefab   = cubePrefab;
-		m_PerlinOffset = perlinOffset;
+		m_CubePrefab    = cubePrefab;
+		m_CubeTypesData = cubeTypesData;
+		m_PerlinOffset  = Random.Range(0, 10000);
 	}
 
 	// PUBLIC METHODS
@@ -78,7 +80,7 @@ public class ChunkManager
 			return;
 		}
 
-		chunk  = new Chunk(m_CubePrefab, coords, m_PerlinOffset);
+		chunk  = new Chunk(m_CubePrefab, coords, m_PerlinOffset, m_CubeTypesData);
 
 		m_ActiveChunks.Add(chunk);
 	}

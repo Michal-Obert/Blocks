@@ -25,20 +25,28 @@ public class Cube : MonoBehaviour
 	// PRIVATE PROPERTIES
 
 	private GameObject m_GameObject;
+	private Renderer   m_Renderer;
 	private byte       m_MaxHitPoints;
 	private byte       m_CurrentHitPoints;
 
-	// CONSTRUCTOR
+	// MONO OVERRIDES
 
-	public void Init(byte hitPoints)
+	void Awake()
 	{
-		m_GameObject       = gameObject;
-		m_CurrentHitPoints = hitPoints;
-		m_MaxHitPoints     = hitPoints;
-		Status             = E_Status.Active;
+		m_GameObject = gameObject;
+		m_Renderer   = GetComponent<Renderer>();
 	}
 
 	// PUBLIC METHODS
+
+	public void Init(byte hitPoints, Material material, bool activate)
+	{
+		m_CurrentHitPoints  = hitPoints;
+		m_MaxHitPoints      = hitPoints;
+		m_Renderer.material = material;
+		Status              = activate ? E_Status.Active : E_Status.Disabled;
+		m_GameObject.SetActiveSafe(activate);
+	}
 
 	public void SetStatus(E_Status status)
 	{
