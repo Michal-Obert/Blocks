@@ -27,7 +27,9 @@ public class Game : MonoBehaviour
 		m_ChunkManager.GenerateInitialWorld();
 
 		m_Player.Spawn(new Vector3(0, Chunk.SIZE, 0)) ;
-		m_Player.OnCubeHit += m_ChunkManager.OnPlayerDestroyedCube;
+		m_Player.OnCubeDestroyed += m_ChunkManager.OnPlayerDestroyedCube;
+		m_Player.CanPlaceCube    += m_ChunkManager.CanPlaceCube;
+		m_Player.PlaceCube       += m_ChunkManager.PlaceCube;
 		PlayerChunkPosition = new Vector2(0, 0);
 	}
 

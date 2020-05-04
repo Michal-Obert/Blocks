@@ -9,6 +9,15 @@ public class Cube : MonoBehaviour
 		Hidden
 	}
 
+	public enum E_Type : byte
+	{
+		None,
+		Bedrock,
+		Stone,
+		Dirt,
+		Sand
+	}
+
 	// PUBLIC PROPERTIES
 
 	public E_Status Status { get; private set; }
@@ -36,14 +45,14 @@ public class Cube : MonoBehaviour
 		switch (status)
 		{
 			case E_Status.Active:
-				m_GameObject.SetActive(true);
+				m_GameObject.SetActiveSafe(true);
 				if(Status != E_Status.Hidden)
 					m_CurrentHitPoints = m_MaxHitPoints;
 
 				break;
 			case E_Status.Disabled:
 			case E_Status.Hidden:
-				m_GameObject.SetActive(false);
+				m_GameObject.SetActiveSafe(false);
 				break;
 		}
 		Status = status;

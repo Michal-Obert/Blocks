@@ -90,6 +90,44 @@ public class ChunkManager
 		m_InactiveChunks.Add(chunk);
 	}
 
+	public bool CanPlaceCube(Vector3 targetChunkWorldPos, Vector3 targetCubeLocalPos, Vector3 placingCubeLocalPos)
+	{
+		if(targetCubeLocalPos.x == Chunk.SIZE - 1 || targetCubeLocalPos.y == Chunk.SIZE - 1 || targetCubeLocalPos.z == Chunk.SIZE - 1 ||
+			targetCubeLocalPos.x == 0             || targetCubeLocalPos.z == 0)
+		{
+			//TODO: Handle border cubes
+			return false;
+		}
+		var chunkCoordX = targetChunkWorldPos.x / Chunk.SIZE;
+		var chunkCoordY = targetChunkWorldPos.z / Chunk.SIZE;
+
+		for (int i = 0, count = m_ActiveChunks.Count; i < count; i++)
+		{
+			var chunk = m_ActiveChunks[i];
+			if (chunk.CoordX == chunkCoordX && chunk.CoordY == chunkCoordY)
+			{
+				return chunk[placingCubeLocalPos].Status != Cube.E_Status.Active;
+			}
+		}
+		return false;
+	}
+
+	public void PlaceCube(Cube.E_Type type, Vector3 chunkWorldPos, Vector3 cubeLocalPos)
+	{
+		var chunkCoordX = chunkWorldPos.x / Chunk.SIZE;
+		var chunkCoordY = chunkWorldPos.z / Chunk.SIZE;
+
+		for (int i = 0, count = m_ActiveChunks.Count; i < count; i++)
+		{
+			var chunk = m_ActiveChunks[i];
+			if (chunk.CoordX == chunkCoordX && chunk.CoordY == chunkCoordY)
+			{
+				chunk.PlaceCube(cubeLocalPos);
+				return;
+			}
+		}
+	}
+
 	public void OnPlayerDestroyedCube(Vector3 chunkWorldPos, Vector3 cubeLocalPos)
 	{
 		var chunkCoordX = chunkWorldPos.x / Chunk.SIZE;

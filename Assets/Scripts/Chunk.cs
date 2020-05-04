@@ -79,7 +79,20 @@ public class Chunk
 		DeactivateHiddenCubes();
 	}
 
+	internal void PlaceCube(Vector3 cubeLocalPos)
+	{
+		m_Cubes[(int)cubeLocalPos.x][(int)cubeLocalPos.y][(int)cubeLocalPos.z].SetStatus(E_Status.Active);
+
+	//TODO: Only check neighbouring cubes
+		DeactivateHiddenCubes();
+	}
+
 	// PUBLIC METHODS
+
+	public Cube this[Vector3 cubeIndex]
+	{
+		get { return m_Cubes[(int)cubeIndex.x][(int)cubeIndex.y][(int)cubeIndex.z]; } 
+	}
 
 	public void Activate(Vector2 coords)
 	{
