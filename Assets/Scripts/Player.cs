@@ -54,6 +54,13 @@ public class Player : MonoBehaviour
 		m_HighlightingCube.transform.parent = null;
 	}
 
+	void OnDestroy()
+	{
+		OnCubeDestroyed = null;
+		PlaceCube       = null;
+		CanPlaceCube    = null;
+	}
+
 	void Update()
 	{
 		m_RaycastTargetCheckTimer += Time.deltaTime;
@@ -154,7 +161,7 @@ public class Player : MonoBehaviour
 
 	private float GetPlayerRange(Vector3 lookDirection)
 	{
-		return 2 + (Mathf.Max(Vector3.Angle(m_PlayerCamera.forward, Vector3.up) - 90, 0)) / 120f;
+		return 2 + (Mathf.Max(Vector3.Angle(lookDirection, Vector3.up) - 90, 0)) / 120f;
 	}
 
 	private void HandleDestroying()
