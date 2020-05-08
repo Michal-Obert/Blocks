@@ -130,6 +130,19 @@ public class Chunk : System.IDisposable
 		DeactivateHiddenCubes();
 	}
 
+	public void Dispose()
+	{
+		for (int x = 0, xCount = m_Cubes.Length; x < xCount; x++)
+			for (int y = 0, yCount = m_Cubes[x].Length; y < yCount; y++)
+				for (int z = 0, zCount = m_Cubes[x][y].Length; z < zCount; z++)
+					Object.Destroy(m_Cubes[x][y][z].gameObject);
+
+		Object.Destroy(m_Root);
+		m_CubesToDeactivate = null;
+		m_CubeTypesData = null;
+		m_Root = null;
+	}
+
 	// PRIVATE METHODS
 
 	private void SpawnCube(Cube cube, int height, bool activate)
@@ -195,18 +208,5 @@ public class Chunk : System.IDisposable
 			cube.SetStatus(E_Status.Hidden);
 		}
 		m_CubesToDeactivate.Clear();
-	}
-
-	public void Dispose()
-	{
-		for (int x = 0, xCount = m_Cubes.Length; x < xCount; x++)
-			for (int y = 0, yCount = m_Cubes[x].Length; y < yCount; y++)
-				for (int z = 0, zCount = m_Cubes[x][y].Length; z < zCount; z++)
-					Object.Destroy(m_Cubes[x][y][z].gameObject);
-		
-		Object.Destroy(m_Root);
-		m_CubesToDeactivate = null;
-		m_CubeTypesData     = null;
-		m_Root              = null;
 	}
 }
