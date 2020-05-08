@@ -1,22 +1,25 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class ChunkManager
+public class ChunkManager : System.IDisposable
 {
 	// CONSTANTS
 
+#if UNITY_EDITOR                    //performance in editor sucks right now, this makes testing manageable 
+	private const int CHUNK_VISIBILITY_RANGE = 1;
+#else
 	private const int CHUNK_VISIBILITY_RANGE = 3;
-
+#endif
 	// PRIVATE PROPERTIES
 
 	private List<Chunk>    m_InactiveChunks = new List<Chunk>((2 * CHUNK_VISIBILITY_RANGE + 1) * 2 - 1);
 	private List<Chunk>    m_ActiveChunks   = new List<Chunk>((2 * CHUNK_VISIBILITY_RANGE + 1) * (2 * CHUNK_VISIBILITY_RANGE + 1));
 	private GameObject     m_CubePrefab;
-	private int            m_PerlinOffset; //tood persist between sessions;
+	private int            m_PerlinOffset;
 	private CubeTypeData[] m_CubeTypesData;
 
 	// CONSTRUCTOR
-
+	
 	public ChunkManager(GameObject cubePrefab, CubeTypeData[] cubeTypesData)
 	{
 		m_CubePrefab    = cubePrefab;
@@ -26,11 +29,13 @@ public class ChunkManager
 
 	// PUBLIC METHODS
 
-	public void GenerateInitialWorld()
+	public void GenerateWorld(Vector2 playerChunkPosition)
 	{
-		for (int i = -CHUNK_VISIBILITY_RANGE; i < (CHUNK_VISIBILITY_RANGE + 1); i++)
+		var playerX = (int)playerChunkPosition.x;
+		var playerY = (int)playerChunkPosition.y;
+		for (int i = playerX - CHUNK_VISIBILITY_RANGE; i < (playerX + CHUNK_VISIBILITY_RANGE + 1); i++)
 		{
-			for (int j = -CHUNK_VISIBILITY_RANGE; j < (CHUNK_VISIBILITY_RANGE + 1); j++)
+			for (int j = playerY - CHUNK_VISIBILITY_RANGE; j < (playerY + CHUNK_VISIBILITY_RANGE + 1); j++)
 				TrySpawnChunk(new Vector2(i, j));
 		}
 	}
@@ -124,7 +129,7 @@ public class ChunkManager
 			var chunk = m_ActiveChunks[i];
 			if (chunk.CoordX == chunkCoordX && chunk.CoordY == chunkCoordY)
 			{
-				chunk.PlaceCube(cubeLocalPos);
+				chunk.PlaceCube(cubeLocalPos, type);
 				return;
 			}
 		}
@@ -145,4 +150,24 @@ public class ChunkManager
 			}
 		}
 	}
+
+	public void Dispose()
+	{
+		for(int i = 0, count = m_InactiveChunks.Count; i < count; i++)
+		{
+			m_InactiveChunks[i].Dispose();
+		}
+		m_InactiveChunks.Clear();
+		m_InactiveChunks = null;
+
+		for(int i = 0, count = m_ActiveChunks.Count; i < count; i++)
+		{
+			m_ActiveChunks[i].Dispose();
+		}
+		m_ActiveChunks.Clear();
+		m_ActiveChunks = null;
+
+		m_CubePrefab    = null;
+		m_CubeTypesData = null;
+}
 }

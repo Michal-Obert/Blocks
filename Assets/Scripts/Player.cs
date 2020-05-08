@@ -56,9 +56,14 @@ public class Player : MonoBehaviour
 
 	void OnDestroy()
 	{
-		OnCubeDestroyed = null;
-		PlaceCube       = null;
-		CanPlaceCube    = null;
+		Destroy(m_HighlightingCube);
+		Destroy(m_PlacingCube);
+
+		m_HighlightingCube = null;
+		m_PlacingCube      = null;
+		OnCubeDestroyed    = null;
+		PlaceCube          = null;
+		CanPlaceCube       = null;
 	}
 
 	void Update()

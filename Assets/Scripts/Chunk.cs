@@ -3,7 +3,7 @@ using UnityEngine;
 
 using static Cube;
 
-public class Chunk
+public class Chunk : System.IDisposable
 {
 	// CONSTANTS
 
@@ -104,7 +104,7 @@ public class Chunk
 		m_Root.SetActive(false);
 	}
 
-	public void PlaceCube(Vector3 cubeLocalPos)
+	public void PlaceCube(Vector3 cubeLocalPos, E_Type type)
 	{
 		m_Cubes[(int)cubeLocalPos.x][(int)cubeLocalPos.y][(int)cubeLocalPos.z].SetStatus(E_Status.Active);
 
@@ -195,5 +195,18 @@ public class Chunk
 			cube.SetStatus(E_Status.Hidden);
 		}
 		m_CubesToDeactivate.Clear();
+	}
+
+	public void Dispose()
+	{
+		for (int x = 0, xCount = m_Cubes.Length; x < xCount; x++)
+			for (int y = 0, yCount = m_Cubes[x].Length; y < yCount; y++)
+				for (int z = 0, zCount = m_Cubes[x][y].Length; z < zCount; z++)
+					Object.Destroy(m_Cubes[x][y][z].gameObject);
+		
+		Object.Destroy(m_Root);
+		m_CubesToDeactivate = null;
+		m_CubeTypesData     = null;
+		m_Root              = null;
 	}
 }
