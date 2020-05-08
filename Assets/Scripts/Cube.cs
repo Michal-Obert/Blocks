@@ -39,7 +39,7 @@ public class Cube : MonoBehaviour
 
 	// PUBLIC METHODS
 
-	public void Init(byte hitPoints, Material material, bool activate)
+	public void SpawnCube(byte hitPoints, Material material, bool activate)
 	{
 		m_CurrentHitPoints  = hitPoints;
 		m_MaxHitPoints      = hitPoints;

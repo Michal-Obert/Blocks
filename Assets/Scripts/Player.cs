@@ -96,16 +96,16 @@ public class Player : MonoBehaviour
 		HandleDestroying();
 
 		if (Input.GetKeyDown(KeyCode.Alpha1))
-			SelectType(CubeType.Bedrock);
+			SelectType(CubeType.Sand);
 		
 		if (Input.GetKeyDown(KeyCode.Alpha2))
-			SelectType(CubeType.Stone);
+			SelectType(CubeType.Dirt);
 		
 		if (Input.GetKeyDown(KeyCode.Alpha3))
-			SelectType(CubeType.Dirt);
+			SelectType(CubeType.Stone);
 	
 		if (Input.GetKeyDown(KeyCode.Alpha4))
-			SelectType(CubeType.Sand);
+			SelectType(CubeType.Bedrock);
 	}
 
 	// PUBLIC METHODS

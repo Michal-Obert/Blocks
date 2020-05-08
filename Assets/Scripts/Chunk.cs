@@ -52,9 +52,9 @@ public class Chunk : System.IDisposable
 					var cube                           = cubeObject.GetComponent<Cube>();
 					m_Cubes[x][y][z]                   = cube;
 					if (SIZE * ComputePerlinNoise(new Vector2(CoordX * SIZE + x, CoordY * SIZE + z)) > y)
-						InitCube(cube, y, true);
+						SpawnCube(cube, y, true);
 					else
-						InitCube(cube, y, false);
+						SpawnCube(cube, y, false);
 				}
 			}
 		}
@@ -87,9 +87,9 @@ public class Chunk : System.IDisposable
 				{
 					var cube = m_Cubes[x][y][z];
 					if (SIZE * ComputePerlinNoise(new Vector2(CoordX * SIZE + x, CoordY * SIZE + z)) > y)
-						InitCube(cube, y, true);
+						SpawnCube(cube, y, true);
 					else
-						InitCube(cube, y, false);
+						SpawnCube(cube, y, false);
 				}
 			}
 		}
@@ -104,9 +104,9 @@ public class Chunk : System.IDisposable
 		m_Root.SetActive(false);
 	}
 
-	public void PlaceCube(Vector3 cubeLocalPos, E_Type type)
+	public void PlaceCube(Vector3 cubeLocalPos, CubeTypeData cubeType)
 	{
-		m_Cubes[(int)cubeLocalPos.x][(int)cubeLocalPos.y][(int)cubeLocalPos.z].SetStatus(E_Status.Active);
+		m_Cubes[(int)cubeLocalPos.x][(int)cubeLocalPos.y][(int)cubeLocalPos.z].SpawnCube(cubeType.Health, cubeType.Material, true);
 
 	//TODO: Only check neighbouring cubes
 		DeactivateHiddenCubes();
@@ -132,7 +132,7 @@ public class Chunk : System.IDisposable
 
 	// PRIVATE METHODS
 
-	private void InitCube(Cube cube, int height, bool activate)
+	private void SpawnCube(Cube cube, int height, bool activate)
 	{
 		var heightRatio  = height / (float)(SIZE - 1);
 		var numOfCubes   = m_CubeTypesData.Length;
@@ -149,11 +149,11 @@ public class Chunk : System.IDisposable
 					break;
 				}
 			}
-			cube.Init(chosenType.Health, chosenType.Material, activate);
+			cube.SpawnCube(chosenType.Health, chosenType.Material, activate);
 		}
 		else
 		{
-			cube.Init(chosenType.Health, chosenType.Material, true);
+			cube.SpawnCube(chosenType.Health, chosenType.Material, true);
 		}
 	}
 

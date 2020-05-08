@@ -10,6 +10,7 @@ public class ChunkManager : System.IDisposable
 #else
 	private const int CHUNK_VISIBILITY_RANGE = 3;
 #endif
+
 	// PRIVATE PROPERTIES
 
 	private List<Chunk>    m_InactiveChunks = new List<Chunk>((2 * CHUNK_VISIBILITY_RANGE + 1) * 2 - 1);
@@ -121,15 +122,23 @@ public class ChunkManager : System.IDisposable
 
 	public void PlaceCube(Cube.E_Type type, Vector3 chunkWorldPos, Vector3 cubeLocalPos)
 	{
-		var chunkCoordX = chunkWorldPos.x / Chunk.SIZE;
-		var chunkCoordY = chunkWorldPos.z / Chunk.SIZE;
+		var chunkCoordX       = chunkWorldPos.x / Chunk.SIZE;
+		var chunkCoordY       = chunkWorldPos.z / Chunk.SIZE;
+		CubeTypeData cubeType = null;
+
+		for(int i = 0, count = m_CubeTypesData.Length; i < count; i++)
+		{
+			var currentCubeType = m_CubeTypesData[i];
+			if (currentCubeType.Type == type)
+				cubeType = currentCubeType;
+		}
 
 		for (int i = 0, count = m_ActiveChunks.Count; i < count; i++)
 		{
 			var chunk = m_ActiveChunks[i];
 			if (chunk.CoordX == chunkCoordX && chunk.CoordY == chunkCoordY)
 			{
-				chunk.PlaceCube(cubeLocalPos, type);
+				chunk.PlaceCube(cubeLocalPos, cubeType);
 				return;
 			}
 		}
