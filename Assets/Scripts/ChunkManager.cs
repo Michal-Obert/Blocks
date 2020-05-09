@@ -100,21 +100,17 @@ public class ChunkManager : System.IDisposable
 
 	public bool CanPlaceCube(Vector3 targetChunkWorldPos, Vector3 targetCubeLocalPos, Vector3 placingCubeLocalPos)
 	{
-		if(targetCubeLocalPos.x == Chunk.SIZE - 1 || targetCubeLocalPos.y == Chunk.SIZE - 1 || targetCubeLocalPos.z == Chunk.SIZE - 1 ||
-			targetCubeLocalPos.x == 0             || targetCubeLocalPos.z == 0)
-		{
-			//TODO: Handle border cubes
-			return false;
-		}
-		var chunkCoordX = targetChunkWorldPos.x / Chunk.SIZE;
-		var chunkCoordY = targetChunkWorldPos.z / Chunk.SIZE;
+		var chunkCoords = new Vector2(targetChunkWorldPos.x / Chunk.SIZE, targetChunkWorldPos.z / Chunk.SIZE);
+
+		BorderCubeCompensation(ref placingCubeLocalPos, ref chunkCoords);
 
 		for (int i = 0, count = m_ActiveChunks.Count; i < count; i++)
 		{
 			var chunk = m_ActiveChunks[i];
-			if (chunk.CoordX == chunkCoordX && chunk.CoordY == chunkCoordY)
+			if (chunk.CoordX == chunkCoords.x && chunk.CoordY == chunkCoords.y)
 			{
-				return chunk[placingCubeLocalPos].Status != Cube.E_Status.Active;
+				var cube = chunk[placingCubeLocalPos];
+				return cube == null || cube.Status != Cube.E_Status.Active;
 			}
 		}
 		return false;
@@ -122,8 +118,9 @@ public class ChunkManager : System.IDisposable
 
 	public void PlaceCube(Cube.E_Type type, Vector3 chunkWorldPos, Vector3 cubeLocalPos)
 	{
-		var chunkCoordX       = chunkWorldPos.x / Chunk.SIZE;
-		var chunkCoordY       = chunkWorldPos.z / Chunk.SIZE;
+		var chunkCoords = new Vector2(chunkWorldPos.x / Chunk.SIZE, chunkWorldPos.z / Chunk.SIZE);
+
+		BorderCubeCompensation(ref cubeLocalPos, ref chunkCoords);
 		CubeTypeData cubeType = null;
 
 		for(int i = 0, count = m_CubeTypesData.Length; i < count; i++)
@@ -136,7 +133,7 @@ public class ChunkManager : System.IDisposable
 		for (int i = 0, count = m_ActiveChunks.Count; i < count; i++)
 		{
 			var chunk = m_ActiveChunks[i];
-			if (chunk.CoordX == chunkCoordX && chunk.CoordY == chunkCoordY)
+			if (chunk.CoordX == chunkCoords.x && chunk.CoordY == chunkCoords.y)
 			{
 				chunk.PlaceCube(cubeLocalPos, cubeType);
 				return;
@@ -178,5 +175,32 @@ public class ChunkManager : System.IDisposable
 
 		m_CubePrefab    = null;
 		m_CubeTypesData = null;
-}
+	}
+
+	// PRIVATE METHODS
+
+	private void BorderCubeCompensation(ref Vector3 cubeLocalPos, ref Vector2 chunkCoords)
+	{
+		if (cubeLocalPos.x == Chunk.SIZE)
+		{
+			chunkCoords.x++;
+			cubeLocalPos.x = 0;
+		}
+		else if (cubeLocalPos.x == -1)
+		{
+			chunkCoords.x--;
+			cubeLocalPos.x = Chunk.SIZE - 1;
+		}
+
+		if (cubeLocalPos.z == Chunk.SIZE)
+		{
+			chunkCoords.y++;
+			cubeLocalPos.z = 0;
+		}
+		else if (cubeLocalPos.z == -1)
+		{
+			chunkCoords.y--;
+			cubeLocalPos.z = Chunk.SIZE - 1;
+		}
+	}
 }

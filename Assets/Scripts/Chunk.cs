@@ -19,6 +19,8 @@ public class Chunk : System.IDisposable
 
 	private GameObject          m_Root;
 	private Cube[][][]          m_Cubes;
+	private List<Cube>          m_HighCubes = new List<Cube>(0);
+	private GameObject          m_CubePrefab;
 	private List<(int,int,int)> m_CubesToDeactivate = new List<(int,int,int)>(SIZE * SIZE * SIZE / 4);
 	private int                 m_PerlinOffset;
 	private CubeTypeData[]      m_CubeTypesData;
@@ -32,9 +34,13 @@ public class Chunk : System.IDisposable
 		CoordY                    = (int)coords.y;
 		m_PerlinOffset            = perlinOffset;
 		m_CubeTypesData           = cubeTypesData;
+		m_CubePrefab              = cubePrefab;
 		m_Cubes                   = new Cube[SIZE][][];
 		m_Root                    = new GameObject();
+
+		var rootTransform         = m_Root.transform;
 		m_Root.transform.position = new Vector3(coords.x * SIZE, 0, coords.y * SIZE);
+
 #if UNITY_EDITOR
 		m_Root.name               = $"[{coords.x},{coords.y}]";
 #endif
@@ -47,10 +53,8 @@ public class Chunk : System.IDisposable
 				m_Cubes[x][y] = new Cube[SIZE];
 				for (int z = 0; z < SIZE; z++)
 				{
-					var cubeObject                     = UnityEngine.Object.Instantiate(cubePrefab, m_Root.transform);
-					cubeObject.transform.localPosition = new Vector3(x, y, z);
-					var cube                           = cubeObject.GetComponent<Cube>();
-					m_Cubes[x][y][z]                   = cube;
+					var cube         = CreateCube(cubePrefab, rootTransform, new Vector3(x, y, z));
+					m_Cubes[x][y][z] = cube;
 					if (SIZE * ComputePerlinNoise(new Vector2(CoordX * SIZE + x, CoordY * SIZE + z)) > y)
 						SpawnCube(cube, y, true);
 					else
@@ -67,7 +71,24 @@ public class Chunk : System.IDisposable
 
 	public Cube this[Vector3 cubeIndex]
 	{
-		get { return m_Cubes[(int)cubeIndex.x][(int)cubeIndex.y][(int)cubeIndex.z]; } 
+		get 
+		{
+			var x = (int)cubeIndex.x;
+			var y = (int)cubeIndex.y;
+			var z = (int)cubeIndex.z;
+			if(y < SIZE)
+				return m_Cubes[x][y][z];
+
+			for (int i = 0, count = m_HighCubes.Count; i < count; i++)
+			{
+				var cube = m_HighCubes[i];
+				var pos = cube.transform.position;
+				if (pos.x == x && pos.y == y && pos.z == z)
+					return cube;
+			}
+
+			return null;
+		} 
 	}
 
 	public void Activate(Vector2 coords)
@@ -101,12 +122,39 @@ public class Chunk : System.IDisposable
 
 	public void Deactivate()
 	{
+		for (int i = 0, count = m_HighCubes.Count; i < count; i++)
+			Object.Destroy(m_HighCubes[i].gameObject);
+
+		m_HighCubes.Clear();
+
 		m_Root.SetActive(false);
 	}
 
 	public void PlaceCube(Vector3 cubeLocalPos, CubeTypeData cubeType)
 	{
-		m_Cubes[(int)cubeLocalPos.x][(int)cubeLocalPos.y][(int)cubeLocalPos.z].SpawnCube(cubeType.Health, cubeType.Material, true);
+		var x = (int)cubeLocalPos.x;
+		var y = (int)cubeLocalPos.y;
+		var z = (int)cubeLocalPos.z;
+		if(y < SIZE)
+		{
+			m_Cubes[x][y][z].SpawnCube(cubeType.Health, cubeType.Material, true);
+		}
+		else
+		{
+			for(int i = 0, count = m_HighCubes.Count; i < count; i++)
+			{
+				var cube = m_HighCubes[i];
+				var pos = cube.transform.position;
+				if (pos.x == x && pos.y == y && pos.z == z)
+				{
+					cube.SpawnCube(cubeType.Health, cubeType.Material, true);
+					return;
+				}
+			}
+			var placedCube = CreateCube(m_CubePrefab, m_Root.transform, cubeLocalPos);
+			placedCube.SpawnCube(cubeType.Health, cubeType.Material, true);
+			m_HighCubes.Add(placedCube);
+		}
 
 	//TODO: Only check neighbouring cubes
 		DeactivateHiddenCubes();
@@ -137,10 +185,14 @@ public class Chunk : System.IDisposable
 				for (int z = 0, zCount = m_Cubes[x][y].Length; z < zCount; z++)
 					Object.Destroy(m_Cubes[x][y][z].gameObject);
 
+		for (int i = 0, count = m_HighCubes.Count; i < count; i++)
+			Object.Destroy(m_HighCubes[i].gameObject);
+
 		Object.Destroy(m_Root);
 		m_CubesToDeactivate = null;
-		m_CubeTypesData = null;
-		m_Root = null;
+		m_CubeTypesData     = null;
+		m_Root              = null;
+		m_CubePrefab        = null;
 	}
 
 	// PRIVATE METHODS
@@ -207,6 +259,7 @@ public class Chunk : System.IDisposable
 			var cube       = m_Cubes[cubeCoords.Item1][cubeCoords.Item2][cubeCoords.Item3];
 			cube.SetStatus(E_Status.Hidden);
 		}
+
 		m_CubesToDeactivate.Clear();
 	}
 }

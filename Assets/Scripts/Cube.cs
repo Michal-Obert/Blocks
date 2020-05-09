@@ -37,6 +37,14 @@ public class Cube : MonoBehaviour
 		m_Renderer   = GetComponent<Renderer>();
 	}
 
+	// PUBLIC STATIC METHODS
+
+	public static Cube CreateCube(GameObject prefab, Transform parent, Vector3 localCoords)
+	{
+		var cubeObject                     = Instantiate(prefab, localCoords + parent.position, Quaternion.identity, parent);
+		return cubeObject.GetComponent<Cube>(); //todo: test GetComponent(typeof)
+	}
+
 	// PUBLIC METHODS
 
 	public void SpawnCube(byte hitPoints, Material material, bool activate)

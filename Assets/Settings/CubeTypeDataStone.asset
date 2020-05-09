@@ -15,4 +15,4 @@ MonoBehaviour:
   Type: 2
   Health: 4
   Material: {fileID: 2100000, guid: 05aa12001fcea3b4f9a269000407d7b9, type: 2}
-  MinHeight: 0.5
+  MaxHeight: 0.5
