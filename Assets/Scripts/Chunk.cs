@@ -163,6 +163,9 @@ public class Chunk : System.IDisposable
 	//TODO: Only 6 cubes have to be checked, not all of them
 	public void OnCubeDestroyed(Vector3 cubeLocalPos)
 	{
+		if (cubeLocalPos.y >= SIZE) //no optimization for high cubes right now
+			return;
+
 		for (int x = 0; x < SIZE; x++)
 		{
 			for (int y = SIZE - 1; y >= 0; --y)
