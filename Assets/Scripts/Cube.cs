@@ -20,70 +20,54 @@ public class Cube : MonoBehaviour
 
 	// PUBLIC PROPERTIES
 
-	public E_Status Status { get; private set; }
+	public E_Status Status           { get; private set; }
+	public E_Type   Type             { get; private set; }
+	public byte     CurrentHitPoints { get; private set; }
 
 	// PRIVATE PROPERTIES
 
 	private GameObject m_GameObject;
 	private Renderer   m_Renderer;
-	private byte       m_MaxHitPoints;
-	private byte       m_CurrentHitPoints;
-
-	// MONO OVERRIDES
-
-	void Awake()
-	{
-		m_GameObject = gameObject;
-		m_Renderer   = GetComponent<Renderer>();
-	}
 
 	// PUBLIC STATIC METHODS
 
 	public static Cube CreateCube(GameObject prefab, Transform parent, Vector3 localCoords)
 	{
-		var cubeObject                     = Instantiate(prefab, localCoords + parent.position, Quaternion.identity, parent);
-		return cubeObject.GetComponent<Cube>(); //todo: test GetComponent(typeof)
+		var cubeObject    = Instantiate(prefab, localCoords + parent.position, Quaternion.identity, parent);
+		var cube          = cubeObject.GetComponent<Cube>(); //todo: test GetComponent(typeof)
+		cube.m_GameObject = cube.gameObject;
+		cube.m_Renderer   = cube.GetComponent<Renderer>();
+		return cube;
 	}
 
 	// PUBLIC METHODS
 
-	public void SpawnCube(byte hitPoints, Material material, bool activate)
+	public void SpawnCube(E_Type type, byte hitPoints, Material material, bool activate)
 	{
-		m_CurrentHitPoints  = hitPoints;
-		m_MaxHitPoints      = hitPoints;
+		Type                = type;
+		CurrentHitPoints    = hitPoints;
 		m_Renderer.material = material;
 		Status              = activate ? E_Status.Active : E_Status.Disabled;
 		m_GameObject.SetActiveSafe(activate);
 	}
 
-	public void SetStatus(E_Status status)
+	public void Hide(bool hide)
 	{
-		switch (status)
-		{
-			case E_Status.Active:
-				m_GameObject.SetActiveSafe(true);
-				if(Status != E_Status.Hidden)
-					m_CurrentHitPoints = m_MaxHitPoints;
-
-				break;
-			case E_Status.Disabled:
-			case E_Status.Hidden:
-				m_GameObject.SetActiveSafe(false);
-				break;
-		}
-		Status = status;
+		m_GameObject.SetActiveSafe(hide == false);
+		Status = hide ? E_Status.Hidden : E_Status.Active;
 	}
 
 	public bool TakeDamage(byte damage)
 	{
-		if (m_CurrentHitPoints < damage)
-			m_CurrentHitPoints = 0;
+		if (CurrentHitPoints < damage)
+			CurrentHitPoints = 0;
 		else
-			m_CurrentHitPoints -= damage;
+			CurrentHitPoints -= damage;
 
-		if (m_CurrentHitPoints == 0)
+		if (CurrentHitPoints == 0)
 		{
-			SetStatus(E_Status.Disabled);
+			m_GameObject.SetActiveSafe(false);
+			Status = E_Status.Disabled;
 			return true;
 		}
 

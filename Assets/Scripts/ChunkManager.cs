@@ -11,6 +11,10 @@ public class ChunkManager : System.IDisposable
 	private const int CHUNK_VISIBILITY_RANGE = 3;
 #endif
 
+	// PUBLIC PROPERTIES
+
+	public Dictionary<(int, int), List<CubeFootprint>> Footprints { get; private set; } = new Dictionary<(int, int), List<CubeFootprint>>(20);
+
 	// PRIVATE PROPERTIES
 
 	private List<Chunk>    m_InactiveChunks = new List<Chunk>((2 * CHUNK_VISIBILITY_RANGE + 1) * 2 - 1);
@@ -21,11 +25,14 @@ public class ChunkManager : System.IDisposable
 
 	// CONSTRUCTOR
 	
-	public ChunkManager(GameObject cubePrefab, CubeTypeData[] cubeTypesData)
+	public ChunkManager(GameObject cubePrefab, CubeTypeData[] cubeTypesData, Dictionary<(int, int), List<CubeFootprint>> footprints)
 	{
-		m_CubePrefab    = cubePrefab;
-		m_CubeTypesData = cubeTypesData;
-		m_PerlinOffset  = Random.Range(0, 10000);
+		m_CubePrefab       = cubePrefab;
+		m_CubeTypesData    = cubeTypesData;
+		m_PerlinOffset     = Random.Range(0, 10000);
+		
+		if (footprints != null)
+			Footprints = footprints;
 	}
 
 	// PUBLIC METHODS
@@ -79,16 +86,22 @@ public class ChunkManager : System.IDisposable
 		{
 			var lastChunkIndex            = m_InactiveChunks.Count - 1;
 			chunk                         = m_InactiveChunks[lastChunkIndex];
-			chunk.Activate(coords);
-
-			m_InactiveChunks.RemoveAt(lastChunkIndex);
-			m_ActiveChunks.Add(chunk);
+			ActivateChunk(chunk, coords, lastChunkIndex);
 			return;
 		}
 
 		chunk  = new Chunk(m_CubePrefab, coords, m_PerlinOffset, m_CubeTypesData);
+		ActivateChunk(chunk, coords);
+	}
 
+	private void ActivateChunk(Chunk chunk, Vector2 coords, int inactiveIndex = -1)
+	{
+		Footprints.TryGetValue(((int)coords.x, (int)coords.y), out var chunkFootprints);
+		chunk.Activate(coords, chunkFootprints);
 		m_ActiveChunks.Add(chunk);
+
+		if(inactiveIndex >= 0)
+			m_InactiveChunks.RemoveAt(inactiveIndex);
 	}
 
 	public void ReturnChunk(Chunk chunk)
@@ -123,7 +136,7 @@ public class ChunkManager : System.IDisposable
 		BorderCubeCompensation(ref cubeLocalPos, ref chunkCoords);
 		CubeTypeData cubeType = null;
 
-		for(int i = 0, count = m_CubeTypesData.Length; i < count; i++)
+		for (int i = 0, count = m_CubeTypesData.Length; i < count; i++)
 		{
 			var currentCubeType = m_CubeTypesData[i];
 			if (currentCubeType.Type == type)
@@ -135,7 +148,13 @@ public class ChunkManager : System.IDisposable
 			var chunk = m_ActiveChunks[i];
 			if (chunk.CoordX == chunkCoords.x && chunk.CoordY == chunkCoords.y)
 			{
-				chunk.PlaceCube(cubeLocalPos, cubeType);
+				var coord = (chunk.CoordX, chunk.CoordY);
+				Footprints.TryGetValue(coord, out var footprints);
+				chunk.PlaceCube(cubeLocalPos, cubeType, ref footprints);
+
+				if (footprints != null)
+					Footprints[coord] = footprints;
+
 				return;
 			}
 		}
@@ -160,21 +179,25 @@ public class ChunkManager : System.IDisposable
 	public void Dispose()
 	{
 		for(int i = 0, count = m_InactiveChunks.Count; i < count; i++)
-		{
 			m_InactiveChunks[i].Dispose();
-		}
+
 		m_InactiveChunks.Clear();
 		m_InactiveChunks = null;
 
 		for(int i = 0, count = m_ActiveChunks.Count; i < count; i++)
-		{
 			m_ActiveChunks[i].Dispose();
-		}
+
 		m_ActiveChunks.Clear();
 		m_ActiveChunks = null;
 
-		m_CubePrefab    = null;
-		m_CubeTypesData = null;
+
+		foreach (var chunkFootprints in Footprints)
+			chunkFootprints.Value?.Clear();
+
+		Footprints.Clear();
+		Footprints         = null;
+		m_CubePrefab       = null;
+		m_CubeTypesData    = null;
 	}
 
 	// PRIVATE METHODS

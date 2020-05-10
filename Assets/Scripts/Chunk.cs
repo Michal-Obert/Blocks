@@ -39,7 +39,7 @@ public class Chunk : System.IDisposable
 		m_Root                    = new GameObject();
 
 		var rootTransform         = m_Root.transform;
-		m_Root.transform.position = new Vector3(coords.x * SIZE, 0, coords.y * SIZE);
+		rootTransform.position    = new Vector3(coords.x * SIZE, 0, coords.y * SIZE);
 
 #if UNITY_EDITOR
 		m_Root.name               = $"[{coords.x},{coords.y}]";
@@ -53,17 +53,10 @@ public class Chunk : System.IDisposable
 				m_Cubes[x][y] = new Cube[SIZE];
 				for (int z = 0; z < SIZE; z++)
 				{
-					var cube         = CreateCube(cubePrefab, rootTransform, new Vector3(x, y, z));
-					m_Cubes[x][y][z] = cube;
-					if (SIZE * ComputePerlinNoise(new Vector2(CoordX * SIZE + x, CoordY * SIZE + z)) > y)
-						SpawnCube(cube, y, true);
-					else
-						SpawnCube(cube, y, false);
+					m_Cubes[x][y][z] = CreateCube(cubePrefab, rootTransform, new Vector3(x, y, z));
 				}
 			}
 		}
-
-		DeactivateHiddenCubes();
 	}
 
 
@@ -91,14 +84,17 @@ public class Chunk : System.IDisposable
 		} 
 	}
 
-	public void Activate(Vector2 coords)
+	public void Activate(Vector2 coords, List<CubeFootprint> footprints)
 	{
-		CoordX                    = (int)coords.x;
-		CoordY                    = (int)coords.y;
-		m_Root.transform.position = new Vector3(coords.x * SIZE, 0, coords.y * SIZE);
+		if (coords.x != CoordX || coords.y != CoordY)
+		{
+			CoordX                    = (int)coords.x;
+			CoordY                    = (int)coords.y;
+			m_Root.transform.position = new Vector3(coords.x * SIZE, 0, coords.y * SIZE);
 #if UNITY_EDITOR
-		m_Root.name               = $"[{coords.x},{coords.y}]";
+			m_Root.name               = $"[{coords.x},{coords.y}]";
 #endif
+		}
 
 		for (int x = 0; x < SIZE; x++)
 		{
@@ -115,6 +111,9 @@ public class Chunk : System.IDisposable
 			}
 		}
 
+		if (footprints != null)
+			RestoreCubesFromFootprint(footprints);
+
 		DeactivateHiddenCubes();
 
 		m_Root.SetActive(true);
@@ -130,30 +129,45 @@ public class Chunk : System.IDisposable
 		m_Root.SetActive(false);
 	}
 
-	public void PlaceCube(Vector3 cubeLocalPos, CubeTypeData cubeType)
+
+	public void PlaceCube(Vector3 cubeLocalPos, CubeTypeData cubeType, ref List<CubeFootprint> footprints)
 	{
 		var x = (int)cubeLocalPos.x;
 		var y = (int)cubeLocalPos.y;
 		var z = (int)cubeLocalPos.z;
-		if(y < SIZE)
+		if (y < SIZE)
 		{
-			m_Cubes[x][y][z].SpawnCube(cubeType.Health, cubeType.Material, true);
+			m_Cubes[x][y][z].SpawnCube(cubeType.Type, cubeType.Health, cubeType.Material, true);
 		}
 		else
 		{
-			for(int i = 0, count = m_HighCubes.Count; i < count; i++)
+			for (int i = 0, count = m_HighCubes.Count; i < count; i++)
 			{
 				var cube = m_HighCubes[i];
 				var pos = cube.transform.position;
 				if (pos.x == x && pos.y == y && pos.z == z)
 				{
-					cube.SpawnCube(cubeType.Health, cubeType.Material, true);
+					cube.SpawnCube(cubeType.Type, cubeType.Health, cubeType.Material, true);
+					for (int j = 0, footprintsCount = footprints.Count; j < footprintsCount; j++)
+					{
+						var footprint = footprints[j];
+						if (footprint.LocalCoordsX == x && footprint.LocalCoordsY == y && footprint.LocalCoordsZ == z)
+						{
+							footprint.SetData(cubeLocalPos, cubeType.Type, cubeType.Health);  //todo: save current health status, rather than max
+						}
+					}
 					return;
 				}
 			}
 			var placedCube = CreateCube(m_CubePrefab, m_Root.transform, cubeLocalPos);
-			placedCube.SpawnCube(cubeType.Health, cubeType.Material, true);
+			placedCube.SpawnCube(cubeType.Type, cubeType.Health, cubeType.Material, true);
+
 			m_HighCubes.Add(placedCube);
+
+			if (footprints == null)
+				footprints = new List<CubeFootprint>(4);
+
+			footprints.Add(new CubeFootprint(cubeLocalPos, cubeType.Type, cubeType.Health));
 		}
 
 	//TODO: Only check neighbouring cubes
@@ -174,7 +188,7 @@ public class Chunk : System.IDisposable
 				{
 					var cube = m_Cubes[x][y][z];
 					if (cube.Status == E_Status.Hidden && SIZE * ComputePerlinNoise(new Vector2(CoordX * SIZE + x, CoordY * SIZE + z)) > y)
-						cube.SetStatus(E_Status.Active);
+						cube.Hide(false);
 				}
 			}
 		}
@@ -217,11 +231,33 @@ public class Chunk : System.IDisposable
 					break;
 				}
 			}
-			cube.SpawnCube(chosenType.Health, chosenType.Material, activate);
+			cube.SpawnCube(chosenType.Type, chosenType.Health, chosenType.Material, activate);
 		}
 		else
 		{
-			cube.SpawnCube(chosenType.Health, chosenType.Material, true);
+			cube.SpawnCube(chosenType.Type, chosenType.Health, chosenType.Material, true);
+		}
+	}
+
+	private void RestoreCubesFromFootprint(List<CubeFootprint> footprints)
+	{
+		for (int i = 0, count = footprints.Count; i < count; i++)
+		{
+			var cubeFootprint     = footprints[i];
+			CubeTypeData typeData = null;
+			for (int j = 0, dataCount = m_CubeTypesData.Length; j < dataCount; j++)
+			{
+				var currentTypeData = m_CubeTypesData[j];
+				if (cubeFootprint.Type == currentTypeData.Type)
+				{
+					typeData = currentTypeData;
+					break;
+				}
+			}
+
+			var cube = CreateCube(m_CubePrefab, m_Root.transform, new Vector3(cubeFootprint.LocalCoordsX, cubeFootprint.LocalCoordsY, cubeFootprint.LocalCoordsZ));
+			cube.SpawnCube(cubeFootprint.Type, cubeFootprint.RemainingHealth, typeData.Material, true);
+			m_HighCubes.Add(cube);
 		}
 	}
 
@@ -260,7 +296,7 @@ public class Chunk : System.IDisposable
 		{
 			var cubeCoords = m_CubesToDeactivate[i];
 			var cube       = m_Cubes[cubeCoords.Item1][cubeCoords.Item2][cubeCoords.Item3];
-			cube.SetStatus(E_Status.Hidden);
+			cube.Hide(true);
 		}
 
 		m_CubesToDeactivate.Clear();

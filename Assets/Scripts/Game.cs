@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿using System.Runtime.Serialization.Formatters.Binary;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
 
 public class Game : MonoBehaviour
 {
@@ -47,13 +50,13 @@ public class Game : MonoBehaviour
 
 	//PRIVATE METHODS
 
-	private void InitGame(int seed, Vector3 playerPosition)
+	private void InitGame(int seed, Vector3 playerPosition, Dictionary<(int, int), List<CubeFootprint>> footprints = null)
 	{
 		Random.InitState(seed);
 		m_Seed              = seed;
 		PlayerChunkPosition = GetPlayerChunkPosition(playerPosition);
 
-		m_ChunkManager = new ChunkManager(m_CubePrefab, m_CubeTypesData);
+		m_ChunkManager = new ChunkManager(m_CubePrefab, m_CubeTypesData, footprints);
 		m_ChunkManager.GenerateWorld(PlayerChunkPosition);
 
 		m_Player = Instantiate<Player>(m_PlayerPrefab);
@@ -77,19 +80,45 @@ public class Game : MonoBehaviour
 
 	private void Save()
 	{
-		PlayerPrefs.SetFloat("PlayerPosX", m_Player.Position.x );
-		PlayerPrefs.SetFloat("PlayerPosY", m_Player.Position.y );
-		PlayerPrefs.SetFloat("PlayerPosZ", m_Player.Position.z );
-		PlayerPrefs.SetInt("Seed", m_Seed);
+		var formatter  = new BinaryFormatter();
+		var path       = Application.persistentDataPath + "/SavedGame";
+		var fileStream = new FileStream(path, FileMode.Create);
+
+		formatter.Serialize(fileStream, m_ChunkManager.Footprints);
+		formatter.Serialize(fileStream, m_Player.Position.x);
+		formatter.Serialize(fileStream, m_Player.Position.y);
+		formatter.Serialize(fileStream, m_Player.Position.z);
+		formatter.Serialize(fileStream, m_Seed);
+
+		fileStream.Close();
 	}
 
 	private void Load()
 	{
+		var path = Application.persistentDataPath + "/SavedGame";
+		if(File.Exists(path) == false)
+		{
+			Debug.LogWarning("Nothing saved. Nothing to Load");
+			return;
+		}
+
+		var formatter  = new BinaryFormatter();
+		var fileStream = new FileStream(path, FileMode.Open);
+
+		var footprints = formatter.Deserialize(fileStream) as Dictionary<(int, int), List<CubeFootprint>>;
+		var playerPosX = (float)formatter.Deserialize(fileStream);
+		var playerPosY = (float)formatter.Deserialize(fileStream);
+		var playerPosZ = (float)formatter.Deserialize(fileStream);
+		var seed       = (int)  formatter.Deserialize(fileStream);
+
+		fileStream.Close();
+
+		var playerPos  = new Vector3(playerPosX, playerPosY, playerPosZ);
+
 		m_ChunkManager.Dispose();
-		var playerPos  = new Vector3(PlayerPrefs.GetFloat("PlayerPosX"), PlayerPrefs.GetFloat("PlayerPosY"), PlayerPrefs.GetFloat("PlayerPosZ"));
-		var seed       = PlayerPrefs.GetInt("Seed");
+		m_ChunkManager = null;
 		Object.Destroy(m_Player.gameObject);
 
-		InitGame(seed, playerPos);
+		InitGame(seed, playerPos, footprints);
 	}
 }
