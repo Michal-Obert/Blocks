@@ -17,7 +17,7 @@ public class CubeFootprint
 
 	public CubeFootprint(Vector3 localCoords, E_Type type, byte remainingHealth)
 	{
-		SetData(localCoords, type, RemainingHealth);
+		SetData(localCoords, type, remainingHealth);
 	}
 
 	public void SetData(Vector3 localCoords, E_Type type, byte remainingHealth)
