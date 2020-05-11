@@ -129,7 +129,7 @@ public class ChunkManager : System.IDisposable
 		return false;
 	}
 
-	public void PlaceCube(Cube.E_Type type, Vector3 chunkWorldPos, Vector3 cubeLocalPos)
+	public void PlaceCubeByPlayer(Cube.E_Type type, Vector3 chunkWorldPos, Vector3 cubeLocalPos)
 	{
 		var chunkCoords = new Vector2(chunkWorldPos.x / Chunk.SIZE, chunkWorldPos.z / Chunk.SIZE);
 
@@ -150,7 +150,7 @@ public class ChunkManager : System.IDisposable
 			{
 				var coord = (chunk.CoordX, chunk.CoordY);
 				Footprints.TryGetValue(coord, out var footprints);
-				chunk.PlaceCube(cubeLocalPos, cubeType, ref footprints);
+				chunk.PlaceCubeByPlayer(cubeLocalPos, cubeType, ref footprints);
 
 				if (footprints != null)
 					Footprints[coord] = footprints;
@@ -162,15 +162,21 @@ public class ChunkManager : System.IDisposable
 
 	public void OnPlayerDestroyedCube(Vector3 chunkWorldPos, Vector3 cubeLocalPos)
 	{
-		var chunkCoordX = chunkWorldPos.x / Chunk.SIZE;
-		var chunkCoordY = chunkWorldPos.z / Chunk.SIZE;
+		var chunkCoordX = (int)chunkWorldPos.x / Chunk.SIZE;
+		var chunkCoordY = (int)chunkWorldPos.z / Chunk.SIZE;
 
 		for (int i = 0, count = m_ActiveChunks.Count; i < count; i++)
 		{
 			var chunk = m_ActiveChunks[i];
 			if (chunk.CoordX == chunkCoordX && chunk.CoordY == chunkCoordY)
 			{
-				chunk.OnCubeDestroyed(cubeLocalPos);
+				var footprintCoord = (chunkCoordX, chunkCoordY);
+				Footprints.TryGetValue(footprintCoord, out var footprints);
+				chunk.OnCubeDestroyed(cubeLocalPos, ref footprints);
+
+				if (footprints != null)
+					Footprints[footprintCoord] = footprints;
+
 				return;
 			}
 		}

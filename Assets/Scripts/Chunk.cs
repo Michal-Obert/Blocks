@@ -19,7 +19,7 @@ public class Chunk : System.IDisposable
 
 	private GameObject          m_Root;
 	private Cube[][][]          m_Cubes;
-	private List<Cube>          m_HighCubes = new List<Cube>(0);
+	private List<Cube>          m_HighCubes         = new List<Cube>(0);
 	private GameObject          m_CubePrefab;
 	private List<(int,int,int)> m_CubesToDeactivate = new List<(int,int,int)>(SIZE * SIZE * SIZE / 4);
 	private int                 m_PerlinOffset;
@@ -129,8 +129,7 @@ public class Chunk : System.IDisposable
 		m_Root.SetActive(false);
 	}
 
-
-	public void PlaceCube(Vector3 cubeLocalPos, CubeTypeData cubeType, ref List<CubeFootprint> footprints)
+	public void PlaceCubeByPlayer(Vector3 cubeLocalPos, CubeTypeData cubeType, ref List<CubeFootprint> footprints)
 	{
 		var x = (int)cubeLocalPos.x;
 		var y = (int)cubeLocalPos.y;
@@ -138,45 +137,56 @@ public class Chunk : System.IDisposable
 		if (y < SIZE)
 		{
 			m_Cubes[x][y][z].SpawnCube(cubeType.Type, cubeType.Health, cubeType.Material, true);
+
+			AddFootprint(ref footprints, cubeLocalPos, cubeType);
 		}
 		else
 		{
 			for (int i = 0, count = m_HighCubes.Count; i < count; i++)
 			{
 				var cube = m_HighCubes[i];
-				var pos = cube.transform.position;
-				if (pos.x == x && pos.y == y && pos.z == z)
+				if (cubeLocalPos == cube.transform.position)
 				{
 					cube.SpawnCube(cubeType.Type, cubeType.Health, cubeType.Material, true);
-					for (int j = 0, footprintsCount = footprints.Count; j < footprintsCount; j++)
-					{
-						var footprint = footprints[j];
-						if (footprint.LocalCoordsX == x && footprint.LocalCoordsY == y && footprint.LocalCoordsZ == z)
-						{
-							footprint.SetData(cubeLocalPos, cubeType.Type, cubeType.Health);  //todo: save current health status, rather than max
-						}
-					}
+					AddFootprint(ref footprints, cubeLocalPos, cubeType);
+
 					return;
 				}
 			}
 			var placedCube = CreateCube(m_CubePrefab, m_Root.transform, cubeLocalPos);
 			placedCube.SpawnCube(cubeType.Type, cubeType.Health, cubeType.Material, true);
-
+			AddFootprint(ref footprints, cubeLocalPos, cubeType);
 			m_HighCubes.Add(placedCube);
-
-			if (footprints == null)
-				footprints = new List<CubeFootprint>(4);
-
-			footprints.Add(new CubeFootprint(cubeLocalPos, cubeType.Type, cubeType.Health));
 		}
 
-	//TODO: Only check neighbouring cubes
+		//TODO: Only check neighbouring cubes
 		DeactivateHiddenCubes();
 	}
 
 	//TODO: Only 6 cubes have to be checked, not all of them
-	public void OnCubeDestroyed(Vector3 cubeLocalPos)
+	public void OnCubeDestroyed(Vector3 cubeLocalPos, ref List<CubeFootprint> footprints)
 	{
+		if (footprints == null)
+			footprints = new List<CubeFootprint>(4);
+
+		var footprintFound = false;
+		for (int j = footprints.Count - 1; j >= 0; --j)
+		{
+			var footprint = footprints[j];
+			if (footprint.LocalCoordsX == cubeLocalPos.x && footprint.LocalCoordsY == cubeLocalPos.y && footprint.LocalCoordsZ == cubeLocalPos.z)
+			{
+				if (footprint.LocalCoordsY >= SIZE)
+					footprints.RemoveAt(j);
+				else
+					footprint.SetData(cubeLocalPos, E_Type.None, 0);
+
+				footprintFound = true;
+			}
+		}
+
+		if (footprintFound == false)
+			footprints.Add(new CubeFootprint(cubeLocalPos, E_Type.None, 0));
+
 		if (cubeLocalPos.y >= SIZE) //no optimization for high cubes right now
 			return;
 
@@ -239,25 +249,60 @@ public class Chunk : System.IDisposable
 		}
 	}
 
+	private void AddFootprint(ref List<CubeFootprint> footprints, Vector3 cubeLocalPos, CubeTypeData cubeType)
+	{
+		if (footprints == null)
+		{
+			footprints = new List<CubeFootprint>(4);
+			footprints.Add(new CubeFootprint(cubeLocalPos, cubeType.Type, cubeType.Health));
+			return;
+		}
+		var foundFootprint = false;
+		for (int j = 0, footprintsCount = footprints.Count; j < footprintsCount; j++)
+		{
+			var footprint = footprints[j];
+			if (footprint.LocalCoordsX == cubeLocalPos.x && footprint.LocalCoordsY == cubeLocalPos.y && footprint.LocalCoordsZ == cubeLocalPos.z)
+			{
+				footprint.SetData(cubeLocalPos, cubeType.Type, cubeType.Health);  //todo: save current health status, rather than max
+				foundFootprint = true;
+			}
+		}
+		if (foundFootprint == false)
+			footprints.Add(new CubeFootprint(cubeLocalPos, cubeType.Type, cubeType.Health));
+	}
+
 	private void RestoreCubesFromFootprint(List<CubeFootprint> footprints)
 	{
 		for (int i = 0, count = footprints.Count; i < count; i++)
 		{
 			var cubeFootprint     = footprints[i];
 			CubeTypeData typeData = null;
-			for (int j = 0, dataCount = m_CubeTypesData.Length; j < dataCount; j++)
+			if (cubeFootprint.IsActive != false)
 			{
-				var currentTypeData = m_CubeTypesData[j];
-				if (cubeFootprint.Type == currentTypeData.Type)
+				for (int j = 0, dataCount = m_CubeTypesData.Length; j < dataCount; j++)
 				{
-					typeData = currentTypeData;
-					break;
+					var currentTypeData = m_CubeTypesData[j];
+					if (cubeFootprint.Type == currentTypeData.Type)
+					{
+						typeData = currentTypeData;
+						break;
+					}
 				}
 			}
 
-			var cube = CreateCube(m_CubePrefab, m_Root.transform, new Vector3(cubeFootprint.LocalCoordsX, cubeFootprint.LocalCoordsY, cubeFootprint.LocalCoordsZ));
-			cube.SpawnCube(cubeFootprint.Type, cubeFootprint.RemainingHealth, typeData.Material, true);
-			m_HighCubes.Add(cube);
+			var material = typeData != null ? typeData.Material : null;
+			if (cubeFootprint.LocalCoordsY < SIZE)
+			{
+				var hitPoints = typeData != null ? typeData.Health : (byte)0;
+				var cube = m_Cubes[(int)cubeFootprint.LocalCoordsX][(int)cubeFootprint.LocalCoordsY][(int)cubeFootprint.LocalCoordsZ];
+				cube.SpawnCube(cubeFootprint.Type, hitPoints, material, cubeFootprint.IsActive);
+			}
+			else
+			{
+				var cube = CreateCube(m_CubePrefab, m_Root.transform, new Vector3(cubeFootprint.LocalCoordsX, cubeFootprint.LocalCoordsY, cubeFootprint.LocalCoordsZ));
+				cube.SpawnCube(cubeFootprint.Type, cubeFootprint.RemainingHealth, material, true);
+				m_HighCubes.Add(cube);
+			}
 		}
 	}
 

@@ -13,6 +13,8 @@ public class CubeFootprint
 	[SerializeField] public E_Type Type            { get; private set; }
 	[SerializeField] public byte   RemainingHealth { get; private set; }
 
+	public bool IsActive { get { return Type != E_Type.None; } }
+
 	// CONSTRUCTOR
 
 	public CubeFootprint(Vector3 localCoords, E_Type type, byte remainingHealth)
@@ -28,5 +30,4 @@ public class CubeFootprint
 		Type            = type;
 		RemainingHealth = remainingHealth;
 	}
-
 }

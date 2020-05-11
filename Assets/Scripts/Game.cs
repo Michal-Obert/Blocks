@@ -63,7 +63,7 @@ public class Game : MonoBehaviour
 		m_Player.Spawn(playerPosition);
 		m_Player.OnCubeDestroyed += m_ChunkManager.OnPlayerDestroyedCube;
 		m_Player.CanPlaceCube    += m_ChunkManager.CanPlaceCube;
-		m_Player.PlaceCube       += m_ChunkManager.PlaceCube;
+		m_Player.PlaceCube       += m_ChunkManager.PlaceCubeByPlayer;
 	}
 
 	private Vector2 GetPlayerChunkPosition(Vector3 playerPos)
