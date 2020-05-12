@@ -7,6 +7,8 @@ public class ChunkManager : System.IDisposable
 
 #if UNITY_EDITOR                    //performance in editor sucks right now, this makes testing manageable 
 	private const int CHUNK_VISIBILITY_RANGE = 1;
+#elif UNITY_ANDROID
+	private const int CHUNK_VISIBILITY_RANGE = 1;
 #else
 	private const int CHUNK_VISIBILITY_RANGE = 3;
 #endif

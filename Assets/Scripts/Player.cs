@@ -73,24 +73,19 @@ public class Player : MonoBehaviour
 	}
 
 	// PUBLIC METHODS
-	
-	public void Init(InputData inputData, Vector3 position)
+
+#if UNITY_ANDROID
+	public void InitAndroid(InputData inputData, Vector3 playerPosition, AndroidButtons buttons)
 	{
-		m_InputData                        = inputData;
-		m_Transform                        = transform;
-		m_Transform.position               = position;
-		m_GameObject                       = gameObject;
-		m_PlacingCubeTransform             = m_PlacingCube.transform;
-		m_HighlightingCubeTransform        = m_HighlightingCube.transform;
-		m_HighlightingCubeTransform.parent = null;
-		m_LayerMask                        = 1 << LayerMask.NameToLayer("Default");
-
-		m_InputComponent.Init(inputData);
-		m_CameraComponent.Init(inputData);
-		m_MovementComponent.Init(inputData);
-
-		m_GameObject.SetActive(true);
+		m_InputComponent.Buttons = buttons;
+		Init(inputData, playerPosition);
 	}
+#else
+	public void InitStandalone(InputData inputData, Vector3 playerPosition)
+	{
+		Init(inputData, playerPosition);
+	}
+#endif
 
 	public void OnUpdate(float deltaTime)
 	{
@@ -143,6 +138,24 @@ public class Player : MonoBehaviour
 	}
 
 	// PRIVATE METHODS
+
+	private void Init(InputData inputData, Vector3 position)
+	{
+		m_InputData                        = inputData;
+		m_Transform                        = transform;
+		m_Transform.position               = position;
+		m_GameObject                       = gameObject;
+		m_PlacingCubeTransform             = m_PlacingCube.transform;
+		m_HighlightingCubeTransform        = m_HighlightingCube.transform;
+		m_HighlightingCubeTransform.parent = null;
+		m_LayerMask                        = 1 << LayerMask.NameToLayer("Default");
+
+		m_InputComponent.Init(inputData);
+		m_CameraComponent.Init(inputData);
+		m_MovementComponent.Init(inputData);
+
+		m_GameObject.SetActive(true);
+	}
 
 	private void SetPlacingCubeToHand()
 	{

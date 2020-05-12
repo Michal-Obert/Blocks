@@ -13,7 +13,10 @@ public class Game : MonoBehaviour
 	private GameObject     m_CubePrefab;
 	[SerializeField]
 	private CubeTypeData[] m_CubeTypesData;
-
+#if UNITY_EDITOR || UNITY_ANDROID
+	[SerializeField]
+	private AndroidButtons m_AndroidButtons;
+#endif
 	// PUBLIC PROPERTIES
 
 	public  Vector2        PlayerChunkPosition { get; private set; }
@@ -35,6 +38,7 @@ public class Game : MonoBehaviour
 
 	void Update()
 	{
+		UpdateButtons();
 		m_Player.OnUpdate(Time.deltaTime);
 
 		var playerPos    = m_Player.Position;
@@ -64,10 +68,25 @@ public class Game : MonoBehaviour
 		m_ChunkManager.GenerateWorld(PlayerChunkPosition);
 
 		m_Player = Instantiate<Player>(m_PlayerPrefab);
-		m_Player.Init(m_InputData, playerPosition);
+#if UNITY_ANDROID
+		m_Player.InitAndroid(m_InputData, playerPosition, m_AndroidButtons);
+#else
+		m_Player.InitStandalone(m_InputData, playerPosition);
+#endif
+
 		m_Player.OnCubeDestroyed += m_ChunkManager.OnPlayerDestroyedCube;
 		m_Player.CanPlaceCube    += m_ChunkManager.CanPlaceCube;
 		m_Player.PlaceCube       += m_ChunkManager.PlaceCubeByPlayer;
+	}
+
+	private void UpdateButtons()
+	{
+#if UNITY_ANDROID
+		m_AndroidButtons.LeftArrow.OnUpdate();
+		m_AndroidButtons.RightArrow.OnUpdate();
+		m_AndroidButtons.UpArrow.OnUpdate();
+		m_AndroidButtons.DownArrow.OnUpdate();
+#endif
 	}
 
 	private Vector2 GetPlayerChunkPosition(Vector3 playerPos)
