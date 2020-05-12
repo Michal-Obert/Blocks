@@ -10,21 +10,22 @@ public class PlayerCamera : MonoBehaviour
 	// PRIVATE PROPERTIES
 
 	private Transform m_Transform;
+	private InputData m_InputData;
 	private float     m_MouseDirX;
 	private float     m_MouseDirY;
 
-	// MONO OVERRIDES
+	// PUBLIC METHODS
 
-	private void Awake()
+	public void Init(InputData inputData)
 	{
-		m_Transform      = transform;
-		Cursor.lockState = CursorLockMode.Locked;
+		m_Transform = transform;
+		m_InputData = inputData;
 	}
 
-	void Update()
+	public void OnUpdate(float deltaTime)
 	{
-		m_MouseDirX                    += Input.GetAxis("Mouse X");
-		m_MouseDirY                    += Input.GetAxis("Mouse Y");
+		m_MouseDirX                    += m_InputData.LookDir.x;
+		m_MouseDirY                    += m_InputData.LookDir.y;
 		m_MouseDirY                     = Mathf.Clamp(m_MouseDirY, -80f, 75f);
 		m_Transform.localRotation       = Quaternion.AngleAxis(-m_MouseDirY, Vector3.right);
 		m_PlayerTransform.localRotation = Quaternion.AngleAxis(m_MouseDirX, m_PlayerTransform.up);

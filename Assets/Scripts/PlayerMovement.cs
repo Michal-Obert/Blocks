@@ -14,21 +14,22 @@ public class PlayerMovement : MonoBehaviour
 	//PRIVATE PROPERTIES
 
 	private Transform m_Transform;
+	private InputData m_InputData;
 	private float     m_Gravity             = -4f;
 	private Vector3   m_RemainingVelocity;
 
-	// MONO OVERRIDES
+	// PUBLIC METHODS
 
-	private void Awake()
+	public void Init(InputData inputData)
 	{
 		m_Transform = transform;
+		m_InputData = inputData;
 	}
 
-	void Update()
+	public void OnUpdate(float deltaTime)
 	{
-		var deltaTime          = Time.deltaTime;
-		var horizontalMovement = Input.GetAxis("Horizontal");
-		var verticalMovement   = Input.GetAxis("Vertical");
+		var horizontalMovement = m_InputData.MoveDir.x;
+		var verticalMovement   = m_InputData.MoveDir.y;
 		var movement           = Vector3.zero;
 
 		if (m_CharacterController.isGrounded)
@@ -37,7 +38,7 @@ public class PlayerMovement : MonoBehaviour
 			movement.Normalize();
 			movement *= m_Speed;
 			
-			if (Input.GetKeyDown(KeyCode.Space))
+			if (m_InputData.Jump)
 			{
 				m_RemainingVelocity   = movement;
 				m_RemainingVelocity.y = Mathf.Sqrt(m_JumpHeight * -2f * m_Gravity);

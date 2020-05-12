@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
-using CubeType = Cube.E_Type ;
+using CubeType = Cube.E_Type;
 
-//TODO: Separate Player & input & building
 public class Player : MonoBehaviour
 {
 	// CONSTANTS
@@ -9,7 +8,7 @@ public class Player : MonoBehaviour
 	private const int   LEFT_BUTTON  = 0;
 	private const int   RIGHT_BUTTON = 1;
 	private const int   DAMAGE       = 1;
-	private const float RAYCAST_TIME = 0.25f;
+	private const float RAYCAST_TIME = 0.15f;
 
 	// CONFIGURATION
 
@@ -21,6 +20,16 @@ public class Player : MonoBehaviour
 	private GameObject m_PlacingCube;
 	[SerializeField]
 	private GameObject m_HighlightingCube;
+
+
+	// PLAYER COMPONENTS
+
+	[SerializeField]
+	private PlayerCamera   m_CameraComponent;
+	[SerializeField]
+	private PlayerMovement m_MovementComponent;
+	[SerializeField]
+	private PlayerInput    m_InputComponent;
 
 	// PUBLIC PROPERTIES
 
@@ -35,7 +44,10 @@ public class Player : MonoBehaviour
 	// PRIVATE PROPERTIES
 
 	private Transform  m_Transform;
+	private Transform  m_HighlightingCubeTransform;
+	private Transform  m_PlacingCubeTransform;
 	private GameObject m_GameObject;
+	private InputData  m_InputData;
 	private LayerMask  m_LayerMask; 
 	private float      m_RaycastTargetCheckTimer;
 	private bool       m_CubePlacementApproved; 
@@ -46,29 +58,47 @@ public class Player : MonoBehaviour
 
 	// MONO OVERRIDES
 
-	void Awake()
-	{
-		m_Transform  = transform;
-		m_GameObject = gameObject;
-		m_LayerMask  = 1 << LayerMask.NameToLayer("Default");
-		m_HighlightingCube.transform.parent = null;
-	}
-
 	void OnDestroy()
 	{
 		Destroy(m_HighlightingCube);
 		Destroy(m_PlacingCube);
 
-		m_HighlightingCube = null;
-		m_PlacingCube      = null;
-		OnCubeDestroyed    = null;
-		PlaceCube          = null;
-		CanPlaceCube       = null;
+		m_HighlightingCube          = null;
+		m_HighlightingCubeTransform = null;
+		m_PlacingCube               = null;
+		m_PlacingCubeTransform      = null;
+		CanPlaceCube                = null;
+		PlaceCube                   = null;
+		OnCubeDestroyed             = null;
 	}
 
-	void Update()
+	// PUBLIC METHODS
+	
+	public void Init(InputData inputData, Vector3 position)
 	{
-		m_RaycastTargetCheckTimer += Time.deltaTime;
+		m_InputData                        = inputData;
+		m_Transform                        = transform;
+		m_Transform.position               = position;
+		m_GameObject                       = gameObject;
+		m_PlacingCubeTransform             = m_PlacingCube.transform;
+		m_HighlightingCubeTransform        = m_HighlightingCube.transform;
+		m_HighlightingCubeTransform.parent = null;
+		m_LayerMask                        = 1 << LayerMask.NameToLayer("Default");
+
+		m_InputComponent.Init(inputData);
+		m_CameraComponent.Init(inputData);
+		m_MovementComponent.Init(inputData);
+
+		m_GameObject.SetActive(true);
+	}
+
+	public void OnUpdate(float deltaTime)
+	{
+		m_InputComponent.OnUpdate(deltaTime);
+		m_MovementComponent.OnUpdate(deltaTime);
+		m_CameraComponent.OnUpdate(deltaTime);
+
+		m_RaycastTargetCheckTimer += deltaTime;
 		if (m_SelectedPlacingType == CubeType.None)
 		{
 			if (m_RaycastTargetCheckTimer >= RAYCAST_TIME)
@@ -76,8 +106,8 @@ public class Player : MonoBehaviour
 				if (Physics.Raycast(m_PlayerCamera.transform.position, m_PlayerCamera.forward, out var hit, GetPlayerRange(m_PlayerCamera.forward), m_LayerMask))
 				{
 					m_TargetCube                          = hit.collider.gameObject.GetComponent<Cube>();
-					m_HighlightingCube.transform.position = m_TargetCube.transform.position;
-					m_HighlightingCube.transform.rotation = Quaternion.identity;
+					m_HighlightingCubeTransform.position = m_TargetCube.transform.position;
+					m_HighlightingCubeTransform.rotation = Quaternion.identity;
 					m_HighlightingCube.SetActiveSafe(true);
 				}
 				else
@@ -95,34 +125,30 @@ public class Player : MonoBehaviour
 
 		HandleDestroying();
 
-		if (Input.GetKeyDown(KeyCode.Alpha1))
-			SelectType(CubeType.Sand);
-		
-		if (Input.GetKeyDown(KeyCode.Alpha2))
-			SelectType(CubeType.Dirt);
-		
-		if (Input.GetKeyDown(KeyCode.Alpha3))
-			SelectType(CubeType.Stone);
-	
-		if (Input.GetKeyDown(KeyCode.Alpha4))
-			SelectType(CubeType.Bedrock);
-	}
-
-	// PUBLIC METHODS
-
-	public void Spawn(Vector3 position)
-	{
-		m_Transform.position = position;
-		m_GameObject.SetActive(true);
+		switch (m_InputData.BuildCubeNumber)
+		{
+			case 1:
+				SelectType(CubeType.Sand);
+				break;
+			case 2:
+				SelectType(CubeType.Dirt);
+				break;
+			case 3:
+				SelectType(CubeType.Stone);
+				break;
+			case 4:
+				SelectType(CubeType.Bedrock);
+				break;
+		}
 	}
 
 	// PRIVATE METHODS
 
 	private void SetPlacingCubeToHand()
 	{
-		m_PlacingCube.transform.parent        = m_Hand;
-		m_PlacingCube.transform.localPosition = Vector3.zero;
-		m_PlacingCube.transform.localScale    = new Vector3(0.1f, 0.1f, 0.1f);
+		m_PlacingCubeTransform.parent        = m_Hand;
+		m_PlacingCubeTransform.localPosition = Vector3.zero;
+		m_PlacingCubeTransform.localScale    = new Vector3(0.1f, 0.1f, 0.1f);
 	}
 
 	private Vector3 PlacingPositionOffset(RaycastHit hit)
@@ -171,7 +197,7 @@ public class Player : MonoBehaviour
 
 	private void HandleDestroying()
 	{
-		if (Input.GetMouseButtonDown(LEFT_BUTTON))
+		if (m_InputData.DestroyCube)
 		{
 			if (m_SelectedPlacingType != CubeType.None) //this is switch from building
 			{
@@ -229,7 +255,7 @@ public class Player : MonoBehaviour
 			if (previouslyApproved)
 				SetPlacingCubeToHand();
 		}
-		else if (Input.GetMouseButtonDown(RIGHT_BUTTON))
+		else if (m_InputData.ConfirmBuildCube)
 		{
 			PlaceCube(m_SelectedPlacingType, m_PlacingCubesChunkPosition, m_PlacingCubePosition);
 		}
@@ -237,9 +263,9 @@ public class Player : MonoBehaviour
 
 	private void ShowPlacingCube(Vector3 placingPosition)
 	{
-		m_PlacingCube.transform.rotation   = Quaternion.identity;
-		m_PlacingCube.transform.parent     = null;
-		m_PlacingCube.transform.localScale = Vector3.one;
-		m_PlacingCube.transform.position   = placingPosition;
+		m_PlacingCubeTransform.rotation   = Quaternion.identity;
+		m_PlacingCubeTransform.parent     = null;
+		m_PlacingCubeTransform.localScale = Vector3.one;
+		m_PlacingCubeTransform.position   = placingPosition;
 	}
 }

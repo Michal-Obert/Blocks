@@ -22,17 +22,21 @@ public class Game : MonoBehaviour
 
 	private ChunkManager   m_ChunkManager;
 	private Player         m_Player;
+	private InputData      m_InputData = new InputData();
 	private int            m_Seed;
 
 	//MONO OVERRIDES
 
 	void Start()
 	{
+		Cursor.lockState = CursorLockMode.Locked;
 		InitGame(Random.Range(0, 100000), new Vector3(0, Chunk.SIZE, 0));
 	}
 
 	void Update()
 	{
+		m_Player.OnUpdate(Time.deltaTime);
+
 		var playerPos    = m_Player.Position;
 		var newChunkPos  = GetPlayerChunkPosition(playerPos);
 
@@ -42,9 +46,9 @@ public class Game : MonoBehaviour
 			PlayerChunkPosition = newChunkPos;
 		}
 
-		if (Input.GetKeyDown(KeyCode.F5))
+		if (m_InputData.Save)
 			Save();
-		if (Input.GetKeyDown(KeyCode.F9))
+		if (m_InputData.Load)
 			Load();
 	}
 
@@ -60,7 +64,7 @@ public class Game : MonoBehaviour
 		m_ChunkManager.GenerateWorld(PlayerChunkPosition);
 
 		m_Player = Instantiate<Player>(m_PlayerPrefab);
-		m_Player.Spawn(playerPosition);
+		m_Player.Init(m_InputData, playerPosition);
 		m_Player.OnCubeDestroyed += m_ChunkManager.OnPlayerDestroyedCube;
 		m_Player.CanPlaceCube    += m_ChunkManager.CanPlaceCube;
 		m_Player.PlaceCube       += m_ChunkManager.PlaceCubeByPlayer;

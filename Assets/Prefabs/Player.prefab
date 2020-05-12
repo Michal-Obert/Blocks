@@ -143,6 +143,7 @@ GameObject:
   - component: {fileID: 6031591987898904079}
   - component: {fileID: 6031591987898904177}
   - component: {fileID: 6533864344152010421}
+  - component: {fileID: 8490491731946697240}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -262,6 +263,21 @@ MonoBehaviour:
   m_Hand: {fileID: 1431839307}
   m_PlacingCube: {fileID: 2958327648927188687}
   m_HighlightingCube: {fileID: 2999067551331409635}
+  m_CameraComponent: {fileID: 6031591986822098415}
+  m_MovementComponent: {fileID: 8122959015237594654}
+  m_InputComponent: {fileID: 8490491731946697240}
+--- !u!114 &8490491731946697240
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6031591987898904176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b74135e3934faf54686a60e43409b033, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1262702040
 PrefabInstance:
   m_ObjectHideFlags: 0
