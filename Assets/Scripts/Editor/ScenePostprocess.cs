@@ -10,7 +10,7 @@ public class ScenePostprocess
 		var gameObjects = GameObject.FindGameObjectsWithTag("AndroidOnly");
 		for(int i = gameObjects.Length - 1; i >= 0; --i)
 		{
-			GameObject.Destroy(gameObjects[i]);
+			GameObject.DestroyImmediate(gameObjects[i]);
 		}
 	}
 #endif
