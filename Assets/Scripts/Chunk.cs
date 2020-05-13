@@ -233,11 +233,10 @@ public class Chunk : System.IDisposable
 		{
 			for (int i = numOfCubes - 2; i >= 0; --i)
 			{
-				var previousType = m_CubeTypesData[i+1];
 				var currentType  = m_CubeTypesData[i];
 				if (heightRatio >= currentType.MaxHeight)
 				{
-					chosenType = previousType;
+					chosenType = m_CubeTypesData[i + 1];
 					break;
 				}
 			}
