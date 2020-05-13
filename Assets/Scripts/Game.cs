@@ -142,7 +142,7 @@ public class Game : MonoBehaviour
 
 		m_ChunkManager.Dispose();
 		m_ChunkManager = null;
-		Object.Destroy(m_Player.gameObject);
+		Object.DestroyImmediate(m_Player.gameObject);
 
 		InitGame(seed, playerPos, footprints);
 	}
