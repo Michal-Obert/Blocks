@@ -19,10 +19,11 @@ public class PlayerInput : MonoBehaviour
 	{
 		m_InputData = inputData;
 #if UNITY_ANDROID
-		Buttons.LeftArrow .OnHold += () => m_InputData.MoveDir.x = -1;
-		Buttons.RightArrow.OnHold += () => m_InputData.MoveDir.x =  1; 
-		Buttons.UpArrow   .OnHold += () => m_InputData.MoveDir.y =  1; 
-		Buttons.DownArrow .OnHold += () => m_InputData.MoveDir.y = -1;
+		Buttons.LeftArrow .OnHold += () => m_InputData.MoveDir.x   = -1;
+		Buttons.RightArrow.OnHold += () => m_InputData.MoveDir.x   =  1; 
+		Buttons.UpArrow   .OnHold += () => m_InputData.MoveDir.y   =  1; 
+		Buttons.DownArrow .OnHold += () => m_InputData.MoveDir.y   = -1;
+		Buttons.Break     .OnHold += () => m_InputData.DestroyCube = true;
 		Buttons.Jump      .onClick.AddListener(() => { m_InputData.MoveDir.y      = 1;  m_InputData.Jump = true; } );
 		Buttons.BuildCube1.onClick.AddListener(() => m_InputData.BuildCubeNumber  = 1    );
 		Buttons.BuildCube2.onClick.AddListener(() => m_InputData.BuildCubeNumber  = 2    );
@@ -30,7 +31,6 @@ public class PlayerInput : MonoBehaviour
 		Buttons.BuildCube4.onClick.AddListener(() => m_InputData.BuildCubeNumber  = 4    );
 		Buttons.Save      .onClick.AddListener(() => m_InputData.Save             = true );
 		Buttons.Load      .onClick.AddListener(() => m_InputData.Load             = true );
-		Buttons.Break     .onClick.AddListener(() => m_InputData.DestroyCube      = true );
 		Buttons.Build     .onClick.AddListener(() => m_InputData.ConfirmBuildCube = true );
 #endif
 	}
@@ -41,7 +41,7 @@ public class PlayerInput : MonoBehaviour
 		m_InputData.LookDir          = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
 		m_InputData.Jump             = Input.GetKeyDown(KeyCode.Space);
 		m_InputData.ConfirmBuildCube = Input.GetKeyDown(KeyCode.Mouse1);
-		m_InputData.DestroyCube      = Input.GetKeyDown(KeyCode.Mouse0);
+		m_InputData.DestroyCube      = Input.GetKey(KeyCode.Mouse0);
 		m_InputData.Save             = Input.GetKeyDown(KeyCode.F5);
 		m_InputData.Load             = Input.GetKeyDown(KeyCode.F9);
 
@@ -96,6 +96,7 @@ public class PlayerInput : MonoBehaviour
 		Buttons.RightArrow.OnHold = null;
 		Buttons.UpArrow.OnHold    = null;
 		Buttons.DownArrow.OnHold  = null;
+		Buttons.Break.OnHold      = null;
 		Buttons.Jump.onClick      .RemoveAllListeners();
 		Buttons.BuildCube1.onClick.RemoveAllListeners();
 		Buttons.BuildCube2.onClick.RemoveAllListeners();
@@ -103,7 +104,6 @@ public class PlayerInput : MonoBehaviour
 		Buttons.BuildCube4.onClick.RemoveAllListeners();
 		Buttons.Save.onClick      .RemoveAllListeners();
 		Buttons.Load.onClick      .RemoveAllListeners();
-		Buttons.Break.onClick     .RemoveAllListeners();
 		Buttons.Build.onClick     .RemoveAllListeners();
 	}
 #endif

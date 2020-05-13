@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+
 using CubeType = Cube.E_Type;
 
 public class Player : MonoBehaviour
@@ -7,6 +8,7 @@ public class Player : MonoBehaviour
 
 	private const int   DAMAGE       = 1;
 	private const float RAYCAST_TIME = 0.15f;
+	private const float DAMAGE_TIME  = 0.4f;
 
 	// CONFIGURATION
 
@@ -48,6 +50,7 @@ public class Player : MonoBehaviour
 	private InputData  m_InputData;
 	private LayerMask  m_LayerMask; 
 	private float      m_RaycastTargetCheckTimer;
+	private float      m_DestroyCubeCheckTimer;
 	private bool       m_CubePlacementApproved; 
 	private Cube       m_TargetCube;
 	private Vector3    m_PlacingCubePosition;
@@ -116,7 +119,7 @@ public class Player : MonoBehaviour
 			HandleBuilding();
 		}
 
-		HandleDestroying();
+		HandleDestroying(deltaTime);
 
 		switch (m_InputData.BuildCubeNumber)
 		{
@@ -206,7 +209,7 @@ public class Player : MonoBehaviour
 		return 2 + (Mathf.Max(Vector3.Angle(lookDirection, Vector3.up) - 90, 0)) / 120f;
 	}
 
-	private void HandleDestroying()
+	private void HandleDestroying(float deltaTime)
 	{
 		if (m_InputData.DestroyCube)
 		{
@@ -216,12 +219,28 @@ public class Player : MonoBehaviour
 				return;
 			}
 
-			if (m_TargetCube != null && m_TargetCube.TakeDamage(DAMAGE))
+			if(m_TargetCube != null)
 			{
-				var hitTransform = m_TargetCube.transform;
-				OnCubeDestroyed(hitTransform.parent.position, hitTransform.localPosition);
-				m_HighlightingCube.SetActive(false);
+				m_DestroyCubeCheckTimer     += deltaTime;
+				if (m_DestroyCubeCheckTimer >= DAMAGE_TIME) 
+				{
+					m_DestroyCubeCheckTimer  = 0;
+					if(m_TargetCube.TakeDamage(DAMAGE))
+					{
+						var hitTransform     = m_TargetCube.transform;
+						OnCubeDestroyed(hitTransform.parent.position, hitTransform.localPosition);
+						m_HighlightingCube.SetActive(false);
+					}
+				}
 			}
+			else
+			{
+				m_DestroyCubeCheckTimer = 0f;
+			}
+		}
+		else
+		{
+			m_DestroyCubeCheckTimer = 0f;
 		}
 	}
 

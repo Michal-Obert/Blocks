@@ -86,6 +86,7 @@ public class Game : MonoBehaviour
 		m_AndroidButtons.RightArrow.OnUpdate();
 		m_AndroidButtons.UpArrow.OnUpdate();
 		m_AndroidButtons.DownArrow.OnUpdate();
+		m_AndroidButtons.Break.OnUpdate();
 #endif
 	}
 
