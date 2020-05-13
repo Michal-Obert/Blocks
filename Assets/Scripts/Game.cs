@@ -33,6 +33,7 @@ public class Game : MonoBehaviour
 	void Start()
 	{
 		Cursor.lockState = CursorLockMode.Locked;
+		Cursor.visible   = false;
 		InitGame(Random.Range(0, 100000), new Vector3(0, Chunk.SIZE, 0));
 	}
 
