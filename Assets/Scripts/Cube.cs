@@ -59,6 +59,9 @@ public class Cube : MonoBehaviour
 
 	public bool TakeDamage(byte damage)
 	{
+		if (Type == E_Type.Bedrock)
+			damage = 0;
+
 		if (CurrentHitPoints < damage)
 			CurrentHitPoints = 0;
 		else
