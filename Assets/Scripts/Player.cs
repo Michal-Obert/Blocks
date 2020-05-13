@@ -5,8 +5,6 @@ public class Player : MonoBehaviour
 {
 	// CONSTANTS
 
-	private const int   LEFT_BUTTON  = 0;
-	private const int   RIGHT_BUTTON = 1;
 	private const int   DAMAGE       = 1;
 	private const float RAYCAST_TIME = 0.15f;
 
